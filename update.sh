@@ -82,12 +82,13 @@ echo ""
 
 # ─── Install server deps ───
 log "Installing server dependencies..."
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/server' && (npm ci --production --silent 2>&1 | tail -3 || npm install --production --silent 2>&1 | tail -3)"
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/server' && NODE_ENV=production npm ci --omit=dev --silent 2>&1 | tail -3 || NODE_ENV=production npm install --omit=dev --silent 2>&1 | tail -3"
 
 # ─── Build frontend ───
+# Must install devDependencies (vite, typescript, tailwind) to build — override prod NODE_ENV.
 log "Installing frontend dependencies & building..."
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && (npm ci --silent 2>&1 | tail -3 || npm install --silent 2>&1 | tail -3)"
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && npm run build"
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm ci --include=dev 2>&1 | tail -3 || NODE_ENV=development npm install --include=dev 2>&1 | tail -3"
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=production npm run build"
 log "Frontend built"
 
 # ─── Ensure data directories exist ───

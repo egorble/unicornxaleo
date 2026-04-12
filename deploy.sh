@@ -190,15 +190,16 @@ chown "$APP_USER":"$APP_USER" "$ENV_FILE"
 ###############################################################################
 step "6/10 — Installing dependencies & building frontend"
 
-# Server
+# Server (production deps only — no devDeps needed at runtime)
 log "Installing server dependencies..."
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/server' && npm ci --production --silent 2>&1 | tail -1 || npm install --production --silent 2>&1 | tail -1"
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/server' && NODE_ENV=production npm ci --omit=dev --silent 2>&1 | tail -1 || NODE_ENV=production npm install --omit=dev --silent 2>&1 | tail -1"
 log "Server deps installed"
 
-# Frontend
+# Frontend — MUST install devDependencies (vite, typescript, tailwind are devDeps).
+# Explicitly override NODE_ENV so the operator's prod .env doesn't cause npm to skip them.
 log "Installing frontend dependencies & building..."
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && (npm ci --silent 2>&1 | tail -1 || npm install --silent 2>&1 | tail -1)"
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && npm run build"
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm ci --include=dev 2>&1 | tail -3 || NODE_ENV=development npm install --include=dev 2>&1 | tail -3"
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=production npm run build"
 log "Frontend built at ${APP_DIR}/frontend/dist"
 
 # Pre-warm `serve` so the systemd unit starts fast (npx would otherwise download)

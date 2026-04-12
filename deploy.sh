@@ -137,8 +137,19 @@ git config --global --add safe.directory "${APP_DIR}" 2>/dev/null || true
 
 if [ -d "${APP_DIR}/.git" ]; then
     log "Repo exists — pulling latest..."
-    sudo -u "$APP_USER" git -C "${APP_DIR}" fetch origin main
-    sudo -u "$APP_USER" git -C "${APP_DIR}" reset --hard origin/main
+    sudo -u "$APP_USER" git -C "${APP_DIR}" fetch origin
+    # Detect default branch (main / master / other) — avoids hardcoding.
+    DEFAULT_BRANCH=$(sudo -u "$APP_USER" git -C "${APP_DIR}" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "")
+    if [ -z "$DEFAULT_BRANCH" ]; then
+        DEFAULT_BRANCH=$(sudo -u "$APP_USER" git -C "${APP_DIR}" ls-remote --symref origin HEAD 2>/dev/null | awk '/^ref:/ {sub("refs/heads/",""); print $2; exit}')
+    fi
+    if [ -z "$DEFAULT_BRANCH" ]; then
+        err "Could not determine default branch on origin. Has the repo been pushed yet?
+Push from your local machine first:
+  git push -u origin main"
+    fi
+    log "Using default branch: ${DEFAULT_BRANCH}"
+    sudo -u "$APP_USER" git -C "${APP_DIR}" reset --hard "origin/${DEFAULT_BRANCH}"
 else
     log "Cloning repo into ${APP_DIR}..."
     # Save .env before clone

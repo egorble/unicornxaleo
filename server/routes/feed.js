@@ -126,21 +126,15 @@ async function buildEvents() {
     try { blockHeight = await getBlockHeight(); } catch (_) { blockHeight = 0; }
 
     const [
-        packsSoldRaw,
-        cardsMintedRaw,
         nextListingIdRaw,
         nextPackListingIdRaw,
         nextTournamentIdRaw,
     ] = await Promise.all([
-        safeRead('total_packs_sold', '0u8'),
-        safeRead('total_cards_minted', '0u8'),
         safeRead('next_listing_id', '0u8'),
         safeRead('next_pack_listing_id', '0u8'),
         safeRead('next_tournament_id', '0u8'),
     ]);
 
-    const packsSold = parseScalar(packsSoldRaw);
-    const cardsMinted = parseScalar(cardsMintedRaw);
     const nextListingId = parseScalar(nextListingIdRaw);
     const nextPackListingId = parseScalar(nextPackListingIdRaw);
     const nextTournamentId = parseScalar(nextTournamentIdRaw);
@@ -286,34 +280,6 @@ async function buildEvents() {
         console.error('[feed] live-feed read failed:', err.message);
     }
 
-    // ── Aggregate counters (rendered as single rolling events so the feed
-    // isn't completely empty on a fresh chain with no listings yet) ───
-    if (packsSold > 0) {
-        const summary = `${packsSold} pack${packsSold === 1 ? '' : 's'} sold on-chain so far`;
-        events.push(makeItem({
-            id: `packs-sold-total-${packsSold}`,
-            type: 'pack_sale',
-            eventType: 'PACK_SALE',
-            actor: null,
-            description: summary,
-            summary,
-            timestampMs: nowMs - 5000,
-            meta: { totalPacksSold: packsSold },
-        }));
-    }
-    if (cardsMinted > 0) {
-        const summary = `${cardsMinted} card${cardsMinted === 1 ? '' : 's'} minted across all packs`;
-        events.push(makeItem({
-            id: `cards-minted-total-${cardsMinted}`,
-            type: 'card_mint',
-            eventType: 'CARD_MINT',
-            actor: null,
-            description: summary,
-            summary,
-            timestampMs: nowMs - 10000,
-            meta: { totalCardsMinted: cardsMinted },
-        }));
-    }
 
     // Newest-first
     events.sort((a, b) => b.timestamp - a.timestamp);

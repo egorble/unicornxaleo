@@ -208,8 +208,27 @@ log "Server deps installed"
 
 # Frontend — MUST install devDependencies (vite, typescript, tailwind are devDeps).
 # Explicitly override NODE_ENV so the operator's prod .env doesn't cause npm to skip them.
+# --legacy-peer-deps handles React 19 peer-dep ERESOLVE conflicts common in the Aleo wallet adapters.
 log "Installing frontend dependencies & building..."
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm ci --include=dev 2>&1 | tail -3 || NODE_ENV=development npm install --include=dev 2>&1 | tail -3"
+set +e
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm ci --include=dev --legacy-peer-deps"
+CI_RC=$?
+if [ $CI_RC -ne 0 ]; then
+    warn "npm ci failed (rc=$CI_RC) — falling back to npm install"
+    sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm install --include=dev --legacy-peer-deps" \
+        || err "Frontend dependency install failed. Check /opt/unicornxaleo/.npm/_logs/"
+fi
+set -e
+
+# Verify vite is actually present before trying to build
+if [ ! -x "${APP_DIR}/frontend/node_modules/.bin/vite" ]; then
+    err "vite binary missing at ${APP_DIR}/frontend/node_modules/.bin/vite after install.
+Try manually:
+  cd ${APP_DIR}/frontend
+  sudo -u ${APP_USER} bash -c 'NODE_ENV=development npm install --include=dev --legacy-peer-deps'
+  ls node_modules/.bin/vite"
+fi
+
 sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=production npm run build"
 log "Frontend built at ${APP_DIR}/frontend/dist"
 

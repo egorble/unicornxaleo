@@ -87,7 +87,14 @@ sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/server' && NODE_ENV=production npm c
 # ─── Build frontend ───
 # Must install devDependencies (vite, typescript, tailwind) to build — override prod NODE_ENV.
 log "Installing frontend dependencies & building..."
-sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm ci --include=dev 2>&1 | tail -3 || NODE_ENV=development npm install --include=dev 2>&1 | tail -3"
+set +e
+sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm ci --include=dev --legacy-peer-deps"
+if [ $? -ne 0 ]; then
+    warn "npm ci failed — falling back to npm install"
+    sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=development npm install --include=dev --legacy-peer-deps" \
+        || err "Frontend deps failed"
+fi
+set -e
 sudo -u "$APP_USER" bash -c "cd '${APP_DIR}/frontend' && NODE_ENV=production npm run build"
 log "Frontend built"
 

@@ -15,6 +15,7 @@ import gsap from 'gsap';
 import { useOnboarding } from '../hooks/useOnboarding';
 import OnboardingGuide, { OnboardingStep } from './OnboardingGuide';
 import { blockchainCache, CacheKeys } from '../lib/cache';
+import { getMarketSyncing, subscribeMarketSyncing, marketKey } from '../lib/marketSync';
 
 // Level badge overlay component
 const LevelBadge: React.FC<{ level?: number; className?: string }> = ({ level, className = '' }) => {
@@ -65,6 +66,9 @@ interface PortfolioProps {
 const Portfolio: React.FC<PortfolioProps> = ({ onBuyPack, onOpenPacks, packRefreshSignal }) => {
     const packPriceLabel = '0.1';
     const networkId = getActiveNetworkId();
+    // Re-render on marketplace syncing state changes so overlays appear/disappear
+    const [, _forceMarketTick] = useState(0);
+    useEffect(() => subscribeMarketSyncing(() => _forceMarketTick(v => v + 1)), []);
     const [activeTab, setActiveTab] = useState<'cards' | 'performance'>('cards');
     const [myCards, setMyCards] = useState<CardData[]>([]);
     const [isMergeMode, setIsMergeMode] = useState(false);
@@ -837,6 +841,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ onBuyPack, onOpenPacks, packRefre
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                             {myPacks.map((packId) => {
                                 const isSelected = isPackSelectMode && selectedPackOpenIds.includes(packId);
+                                const packSync =
+                                    getMarketSyncing(marketKey.pack(packId)) ||
+                                    getMarketSyncing(marketKey.pack('pending'));
                                 return (
                                     <div
                                         key={`pack-${packId}`}
@@ -861,7 +868,16 @@ const Portfolio: React.FC<PortfolioProps> = ({ onBuyPack, onOpenPacks, packRefre
                                                 }
                                             }}
                                         >
-                                            <img src="/image.png" alt="Pack" className="absolute inset-0 w-full h-full object-contain p-1.5" loading="lazy" />
+                                            <img src="/aleo-pack.png" alt="Pack" className={`absolute inset-0 w-full h-full object-contain p-1.5 ${packSync ? 'opacity-60 grayscale' : ''}`} loading="lazy" />
+                                            {/* Market syncing overlay */}
+                                            {packSync && (
+                                                <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-[2px] pointer-events-none">
+                                                    <div className="bg-black/70 text-white text-[10px] sm:text-xs font-medium px-2 py-1.5 rounded-md flex items-center gap-1.5 text-center max-w-[90%]">
+                                                        <div className="w-3 h-3 border-2 border-white/80 border-t-transparent rounded-full animate-spin"/>
+                                                        <span>{packSync.label}</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                             {/* Selection badge */}
                                             {isPackSelectMode && isSelected && (
                                                 <div className="absolute top-2 right-2 w-6 h-6 bg-yc-aleo rounded-full flex items-center justify-center z-10 shadow-lg">
@@ -1121,7 +1137,10 @@ const Portfolio: React.FC<PortfolioProps> = ({ onBuyPack, onOpenPacks, packRefre
                 {myCards.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 md:gap-4 pb-24">
                         {myCards.map((card) => {
-                            const isSyncing = !!(card as any)._syncing;
+                            const _shieldSyncing = !!(card as any)._syncing;
+                            const _marketSync = getMarketSyncing(marketKey.card(String((card as any)._rawCardId || card.tokenId)));
+                            const isSyncing = _shieldSyncing || !!_marketSync;
+                            const syncLabel = _marketSync?.label || 'Syncing with Shield...';
                             const isSelectedForMerge = selectedCardIds.includes(card.tokenId);
                             const isSelectedForUpgrade = selectedUpgradeCardId === card.tokenId;
                             const isSelected = isMergeMode ? isSelectedForMerge : (isUpgradeMode ? isSelectedForUpgrade : false);
@@ -1149,7 +1168,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ onBuyPack, onOpenPacks, packRefre
                                         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-[2px] pointer-events-none">
                                             <div className="bg-black/70 text-white text-[10px] sm:text-xs font-medium px-2 py-1.5 rounded-md flex items-center gap-1.5 text-center max-w-[90%]">
                                                 <div className="w-3 h-3 border-2 border-white/80 border-t-transparent rounded-full animate-spin"/>
-                                                <span>Syncing with Shield...</span>
+                                                <span>{syncLabel}</span>
                                             </div>
                                         </div>
                                     )}
@@ -1796,7 +1815,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ onBuyPack, onOpenPacks, packRefre
                         {/* Pack Preview */}
                         <div className="flex items-center gap-4 mb-4 p-3 bg-gray-100 dark:bg-black/50 rounded-xl">
                             <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-gray-100 dark:bg-black/30">
-                                <img src="/image.png" alt="Pack" className="w-full h-full object-contain" />
+                                <img src="/aleo-pack.png" alt="Pack" className="w-full h-full object-contain" />
                             </div>
                             <div>
                                 <h4 className="text-gray-900 dark:text-white font-bold">UnicornX Pack</h4>

@@ -1,0 +1,37 @@
+[Unit]
+Description=UnicornX Aleo Backend (Express.js on port 5170)
+Documentation=https://github.com/egorble/unicornxaleo
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust User/Group and paths if not running under the user that cloned the repo.
+# Default assumes deploy user owns $HOME/unicornxaleo.
+User=%i
+WorkingDirectory=%h/unicornxaleo/server
+ExecStart=/usr/bin/node index.js
+EnvironmentFile=-%h/unicornxaleo/.env
+Environment=NODE_ENV=production
+Environment=PORT=5170
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Graceful shutdown
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Security
+NoNewPrivileges=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=unicornx-backend
+
+[Install]
+WantedBy=multi-user.target

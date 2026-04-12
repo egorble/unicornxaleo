@@ -13,6 +13,7 @@ import { blockchainCache, CacheKeys } from '../lib/cache';
 import { CardData, Rarity, sortByRarity } from '../types';
 import { useOnboarding } from '../hooks/useOnboarding';
 import OnboardingGuide, { OnboardingStep } from './OnboardingGuide';
+import { getMarketSyncing, subscribeMarketSyncing, marketKey } from '../lib/marketSync';
 
 // Rarity colors
 const RARITY_COLORS: Record<string, string> = {
@@ -41,7 +42,7 @@ function safeFormatDate(timestamp: any): string {
     } catch { return '—'; }
 }
 
-type MarketTab = 'listings' | 'auctions' | 'activity';
+type MarketTab = 'listings' | 'activity';
 
 interface ListingWithMeta extends Listing {
     cardName?: string;
@@ -120,6 +121,10 @@ const MARKETPLACE_GUIDE: OnboardingStep[] = [
 ];
 
 const Marketplace: React.FC = () => {
+    // Re-render on market syncing changes so overlays appear/disappear across views
+    const [, _forceMarketTick] = useState(0);
+    useEffect(() => subscribeMarketSyncing(() => _forceMarketTick(v => v + 1)), []);
+
     const {
         getActiveListings,
         buyCard,
@@ -137,6 +142,8 @@ const Marketplace: React.FC = () => {
         createAuction,
         createPackAuction,
         cancelListing,
+        cancelPackListing,
+        buyPackListing,
         cancelAuction,
         getTokenStats,
         getTokenSaleHistory,
@@ -221,6 +228,23 @@ const Marketplace: React.FC = () => {
                             multiplier: undefined,
                             priceFormatted: formatXTZ(listing.price),
                             isPack: true,
+                        };
+                    }
+                    // Prefer data that the hook already resolved from the on-chain listing
+                    // (name/image/rarity/level are public fields on CardListing). Fall back
+                    // to getCardInfo only if hook didn't populate them.
+                    const rarityStr = typeof (listing as any).rarity === 'number'
+                        ? (['Common','Rare','Epic','Legendary'][(listing as any).rarity] || 'Common')
+                        : ((listing as any).rarity || 'Common');
+                    if ((listing as any).name && (listing as any).image) {
+                        return {
+                            ...listing,
+                            cardName: (listing as any).name,
+                            cardImage: (listing as any).image,
+                            rarity: rarityStr,
+                            level: (listing as any).level || 1,
+                            multiplier: (listing as any).level || 1,
+                            priceFormatted: formatXTZ(listing.price),
                         };
                     }
                     try {
@@ -395,7 +419,12 @@ const Marketplace: React.FC = () => {
 
         setBuyingId(Number(listing.listingId));
         try {
-            await buyCard(listing.listingId, listing.price);
+            const result = listing.isPack
+                ? await buyPackListing(listing.listingId)
+                : await buyCard(listing.listingId, listing.price);
+            if (result && (result as any).success === false) {
+                throw new Error((result as any).error || 'Purchase failed');
+            }
             await refreshAfterAction();
             // Force refresh NFT cache so Portfolio shows new card
             if (address) {
@@ -444,7 +473,12 @@ const Marketplace: React.FC = () => {
     const handleCancelListing = async (listing: ListingWithMeta) => {
         setCancellingId(Number(listing.listingId));
         try {
-            await cancelListing(listing.listingId);
+            const result = listing.isPack
+                ? await cancelPackListing(listing.listingId)
+                : await cancelListing(listing.listingId);
+            if (result && (result as any).success === false) {
+                throw new Error((result as any).error || 'Cancel failed');
+            }
             await refreshAfterAction();
             if (activeTab === 'activity') fetchActivity(true);
             alert('Listing cancelled successfully!');
@@ -573,7 +607,8 @@ const Marketplace: React.FC = () => {
                         setIsSelling(false);
                         return;
                     }
-                    await listPack(BigInt(selectedPackId), sellPrice);
+                    const res = await listPack(BigInt(selectedPackId), sellPrice);
+                    if (res && (res as any).success === false) throw new Error((res as any).error || 'Listing failed');
                     alert('Pack listed successfully!');
                 } else {
                     if (!auctionStartPrice || parseFloat(auctionStartPrice) <= 0) {
@@ -611,7 +646,8 @@ const Marketplace: React.FC = () => {
                     setIsSelling(false);
                     return;
                 }
-                await listCard(BigInt(selectedNFT.tokenId), sellPrice);
+                const res = await listCard(BigInt(selectedNFT.tokenId), sellPrice);
+                if (res && (res as any).success === false) throw new Error((res as any).error || 'Listing failed');
                 alert('NFT listed successfully!');
             } else {
                 if (!auctionStartPrice || parseFloat(auctionStartPrice) <= 0) {
@@ -824,17 +860,6 @@ const Marketplace: React.FC = () => {
                         <Tag className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         Buy Now
                         {listings.length > 0 && <span className="bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded text-[10px] md:text-xs">{listings.length}</span>}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('auctions')}
-                        className={`flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'auctions'
-                            ? 'bg-yc-aleo/10 dark:bg-yc-aleo/[0.12] text-yc-aleo'
-                            : 'text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-gray-300'
-                            }`}
-                    >
-                        <Gavel className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                        Auctions
-                        {auctions.length > 0 && <span className="bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded text-[10px] md:text-xs">{auctions.length}</span>}
                     </button>
                     <button
                         onClick={() => setActiveTab('activity')}

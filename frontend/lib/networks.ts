@@ -27,7 +27,7 @@ export interface NetworkConfig {
     adminAddress: string;
 }
 
-export const ALEO_PROGRAM_ID = 'unicornx_v1.aleo';
+export const ALEO_PROGRAM_ID = 'unicornx_v2.aleo';
 export const ALEO_ADMIN = 'aleo1d96ex9hc8j5hj3wwu7elyxsm4dzphw6u7t9vx5hnpg5mjh6anvxqeqcq64';
 export const ALEO_ENDPOINT = 'https://api.explorer.provable.com/v1';
 export const ALEO_NETWORK = 'testnet';

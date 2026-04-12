@@ -6,7 +6,21 @@ const config = require('./config');
 const app = express();
 
 // Middleware
-app.use(cors());
+const ALLOWED_ORIGINS = [
+  'http://localhost:5171',
+  'http://localhost:5170',
+  'https://aleo.unicornx.fun',
+  'http://aleo.unicornx.fun',
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // server-to-server / curl
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // ─── Stub endpoints (registered BEFORE the tournaments router so :id route doesn't shadow them) ───
@@ -115,6 +129,8 @@ app.use('/api/packs', require('./routes/packs'));
 app.use('/api/upgrades', require('./routes/upgrades'));
 app.use('/api/tournaments', require('./routes/tournaments'));
 app.use('/api/cards', require('./routes/cards'));
+app.use('/api/startups', require('./routes/startups'));
+app.use('/api/ai', require('./routes/ai'));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -150,12 +166,42 @@ app.get('/api/info', async (req, res) => {
   }
 });
 
-// Daily scorer cron — runs at 00:00 UTC
-// Uncomment and set ACTIVE_TOURNAMENT_ID when a tournament is running
+// ─── Daily startup scorer ────────────────────────────────────────────────
+// Fetches tweets for each startup, scores them, and appends to
+// server/data/daily-scores.json. Runs at 00:10 UTC every day.
+const { runDailyScorer, getLatestScores, todayKey } = require('./services/daily-scorer');
+
+cron.schedule('10 0 * * *', async () => {
+  try {
+    console.log('[cron] Running daily scorer at', new Date().toISOString());
+    await runDailyScorer();
+  } catch (err) {
+    console.error('[cron] Daily scorer failed:', err.message);
+  }
+}, { timezone: 'UTC' });
+
+// Run once on boot if today's entry is missing — avoids a full-day gap after
+// a deploy. Fire-and-forget so server startup isn't blocked.
+(async () => {
+  try {
+    const latest = getLatestScores();
+    if (latest.date !== todayKey()) {
+      console.log('[startup] No entry for today yet — running daily scorer in background');
+      runDailyScorer().catch(err => console.error('[startup] Scorer failed:', err.message));
+    } else {
+      console.log(`[startup] Daily scores present for ${latest.date}`);
+    }
+  } catch (err) {
+    console.error('[startup] Scorer bootstrap failed:', err.message);
+  }
+})();
+
+// Note: tournament-scoped scorer cron (the legacy EVM pattern) is disabled.
+// Re-enable & wire in an active tournament ID if tournament-level daily
+// scoring is needed:
 // cron.schedule('0 0 * * *', async () => {
-//   const { runDailyScorer } = require('./services/scorer');
-//   console.log('[cron] Running daily scorer...');
-//   await runDailyScorer('2field'); // Replace with active tournament ID
+//   const { runDailyScorer: runTournamentScorer } = require('./services/scorer');
+//   await runTournamentScorer('2field');
 // });
 
 // Start server
@@ -178,6 +224,10 @@ app.listen(config.PORT, () => {
 ║  GET  /api/packs/sold                        ║
 ║  GET  /api/cards/total                       ║
 ║  GET  /api/tournaments/:id                   ║
+║  GET  /api/startups/scores/daily             ║
+║  GET  /api/startups/scores/latest            ║
+║  GET  /api/startups/scores/aggregated        ║
+║  POST /api/ai/card-recommendation            ║
 ╚══════════════════════════════════════════════╝
   `);
 });

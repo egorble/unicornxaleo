@@ -1,0 +1,11 @@
+{
+  "program": "unicornx_v2.aleo",
+  "version": "0.1.0",
+  "description": "UnicornX v2 — v1 + marketplace (list_card, cancel_listing, buy_listing with 4% platform fee)",
+  "license": "MIT",
+  "leo": "4.0.0",
+  "dependencies": [
+    { "name": "credits.aleo", "location": "network", "path": null, "edition": null }
+  ],
+  "dev_dependencies": []
+}

@@ -24,6 +24,7 @@
 const express = require('express');
 const router = express.Router();
 const { readMapping, getBlockHeight } = require('../services/aleo');
+const { getLiveFeed } = require('../services/daily-scorer');
 const config = require('../config');
 
 const STARTUP_BY_ID = Object.fromEntries(
@@ -260,6 +261,30 @@ async function buildEvents() {
     for (const r of listingResults) if (r) events.push(r);
     for (const r of packResults) if (r) events.push(r);
     for (const r of tournamentResults) if (r) for (const e of r) events.push(e);
+
+    // ── Twitter league events (populated by daily-scorer) ────────────
+    try {
+        const twitterEvents = getLiveFeed(200);
+        for (const t of twitterEvents) {
+            const createdMs = new Date(t.createdAt).getTime() || nowMs;
+            events.push(makeItem({
+                id: `tweet-${t.tweetId}`,
+                type: 'tweet',
+                eventType: t.eventType || 'ENGAGEMENT',
+                actor: t.handle ? `@${t.handle}` : null,
+                startup: t.startup,
+                description: t.description,
+                summary: t.summary || t.description,
+                timestampMs: createdMs,
+                points: t.points || 0,
+                meta: { metrics: t.metrics, handle: t.handle },
+            }));
+            // Populate tweetId so UI can link to x.com
+            events[events.length - 1].tweetId = t.tweetId;
+        }
+    } catch (err) {
+        console.error('[feed] live-feed read failed:', err.message);
+    }
 
     // ── Aggregate counters (rendered as single rolling events so the feed
     // isn't completely empty on a fresh chain with no listings yet) ───

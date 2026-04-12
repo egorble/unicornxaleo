@@ -26,6 +26,8 @@ const config = require('../config');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const SCORES_FILE = path.join(DATA_DIR, 'daily-scores.json');
+const LIVE_FEED_FILE = path.join(DATA_DIR, 'live-feed.json');
+const LIVE_FEED_MAX_ITEMS = 500;
 
 // ── Twitter handle lookup ────────────────────────────────────────────────
 // We must know each startup's Twitter handle to call the scorer. The ESM
@@ -147,26 +149,75 @@ async function runDailyScorer({ force = false } = {}) {
     const handles = Object.keys(handleToId);
     console.log(`[daily-scorer] Scoring ${handles.length} startups for ${date}`);
 
+    const feedEvents = [];
+    const idToName = Object.fromEntries(config.STARTUPS.map(s => [s.id, s.name]));
+
     for (const handle of handles) {
         const id = handleToId[handle];
+        const startupName = idToName[id] || handle;
         try {
             const result = await processStartupForDate(handle, date);
             const points = Number(result?.totalPoints || 0);
             scores[`s${id}`] = points;
             console.log(`  [@${handle} -> s${id}] ${points} pts (${result?.tweetCount || 0} tweets)`);
+
+            for (const t of (result?.tweets || [])) {
+                const primaryEvent = (t.events && t.events[0]) || { type: 'ENGAGEMENT' };
+                feedEvents.push({
+                    tweetId: t.id,
+                    handle,
+                    startup: startupName,
+                    eventType: primaryEvent.type || 'ENGAGEMENT',
+                    description: (t.text || '').substring(0, 200),
+                    summary: t.headline || null,
+                    points: Number(t.points || 0),
+                    metrics: t.metrics || {},
+                    date,
+                    createdAt: t.createdAt || new Date().toISOString(),
+                });
+            }
         } catch (err) {
             console.error(`  [@${handle} -> s${id}] FAILED: ${err.message}`);
-            // keep scores[`s${id}`] = 0, continue
         }
     }
 
-    // Re-read store right before writing (minimize race with concurrent reads).
     const latest = loadStore();
     latest[date] = scores;
     saveStore(latest);
     console.log(`[daily-scorer] Wrote ${date} entry to ${SCORES_FILE}`);
 
+    saveLiveFeed(feedEvents, date);
+
     return { date, scores };
+}
+
+// ── Live feed persistence ────────────────────────────────────────────────
+function loadLiveFeed() {
+    try {
+        ensureDataDir();
+        if (!fs.existsSync(LIVE_FEED_FILE)) return [];
+        const raw = fs.readFileSync(LIVE_FEED_FILE, 'utf8');
+        return raw.trim() ? JSON.parse(raw) : [];
+    } catch (err) {
+        console.error('[daily-scorer] Failed to read live feed:', err.message);
+        return [];
+    }
+}
+
+function saveLiveFeed(newEvents, date) {
+    if (!Array.isArray(newEvents) || newEvents.length === 0) return;
+    const existing = loadLiveFeed().filter(e => e.date !== date);
+    const merged = [...newEvents, ...existing]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, LIVE_FEED_MAX_ITEMS);
+    ensureDataDir();
+    fs.writeFileSync(LIVE_FEED_FILE, JSON.stringify(merged, null, 2));
+    console.log(`[daily-scorer] Wrote ${newEvents.length} feed events (${merged.length} total)`);
+}
+
+function getLiveFeed(limit = 50) {
+    const all = loadLiveFeed();
+    return all.slice(0, Math.max(1, Math.min(LIVE_FEED_MAX_ITEMS, limit)));
 }
 
 module.exports = {
@@ -174,5 +225,6 @@ module.exports = {
     getDailyScores,
     getLatestScores,
     getAggregatedScores,
+    getLiveFeed,
     todayKey,
 };

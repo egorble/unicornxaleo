@@ -695,7 +695,7 @@ const App: React.FC = () => {
                 wallets={ALEO_WALLETS}
                 network={Network.TESTNET}
                 decryptPermission={DecryptPermission.AutoDecrypt}
-                programs={['unicornx_v2.aleo', 'credits.aleo']}
+                programs={['unicornx_v3.aleo', 'credits.aleo']}
                 autoConnect
                 onError={(error) => console.error('[UnicornX] Wallet error:', error.message)}
             >

@@ -1,7 +1,7 @@
 /**
  * Feed routes — synthesize recent on-chain activity into a UI-friendly feed.
  *
- * Data source: read mappings on unicornx_v2.aleo via server/services/aleo.js.
+ * Data source: read mappings on unicornx_v3.aleo via server/services/aleo.js.
  *   - total_packs_sold        (0u8 => u32)  — running pack sale count
  *   - total_cards_minted      (0u8 => u32)  — running card mint count
  *   - next_listing_id         (0u8 => u32)  — next card-listing id

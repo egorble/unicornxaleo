@@ -4,11 +4,11 @@ module.exports = {
   PORT: process.env.PORT || 5170,
   ADMIN_PRIVATE_KEY: process.env.ADMIN_PRIVATE_KEY,
   ADMIN_ADDRESS: process.env.ADMIN_ADDRESS,
-  PROGRAM_ID: process.env.PROGRAM_ID || 'unicornx_v2.aleo',
+  PROGRAM_ID: process.env.PROGRAM_ID || 'unicornx_v3.aleo',
   NETWORK: process.env.NETWORK || 'testnet',
   ENDPOINT: process.env.ENDPOINT || 'https://api.explorer.provable.com/v1',
   LEO_PATH: process.env.LEO_PATH || 'leo',
-  CONTRACT_PATH: process.env.CONTRACT_PATH || '../contracts/unicornx_v2',
+  CONTRACT_PATH: process.env.CONTRACT_PATH || '../contracts/unicornx_v3',
   ADMIN_API_KEY: process.env.ADMIN_API_KEY,
 
   // 19 startups

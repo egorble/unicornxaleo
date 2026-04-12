@@ -1,4 +1,4 @@
-// Marketplace hook — Aleo v2 (unicornx_v2.aleo).
+// Marketplace hook — Aleo v2 (unicornx_v3.aleo).
 // Card listings (atomic buy with public card data) + pack listings (count-based).
 // All transactions go through Shield wallet (signer.execute).
 

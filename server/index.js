@@ -67,34 +67,75 @@ app.put('/api/users/:address', (req, res) => {
   res.json({ success: true, data: updated });
 });
 
-// Active tournament — return tournament 2 by default
+// Helpers for tournament mapping parsing
+function parseTournamentField(data, key) {
+  const m = data.match(new RegExp(`${key}:\\s*(\\d+)u\\d+`));
+  return m ? parseInt(m[1]) : 0;
+}
+
+async function readNextTournamentId(readMapping) {
+  const raw = await readMapping('next_tournament_id', '0u8');
+  if (!raw) return 1;
+  const m = String(raw).match(/(\d+)/);
+  return m ? parseInt(m[1]) : 1;
+}
+
+// Active tournament — iterate from next_tournament_id-1 downward, first with status=0 & block<end_height
 app.get('/api/tournaments/active', async (req, res) => {
   const { readMapping, getBlockHeight } = require('./services/aleo');
   try {
-    const data = await readMapping('tournaments', '2field');
-    if (!data) return res.json({ id: 2, status: 'none' });
     const blockHeight = await getBlockHeight();
-    const get = (k) => {
-      const m = data.match(new RegExp(`${k}:\\s*(\\d+)u\\d+`));
-      return m ? parseInt(m[1]) : 0;
-    };
-    res.json({
-      id: 2,
-      registrationStart: get('registration_height'),
-      startTime: get('start_height'),
-      endTime: get('end_height'),
-      status: get('status'),
-      entryCount: get('entry_count'),
-      prizePool: get('prize_pool'),
-      blockHeight,
-    });
+    const nextId = await readNextTournamentId(readMapping);
+    let mostRecent = null;
+    for (let id = nextId - 1; id >= 1; id--) {
+      const data = await readMapping('tournaments', `${id}field`);
+      if (!data) continue;
+      const parsed = {
+        id,
+        registrationStart: parseTournamentField(data, 'registration_height'),
+        startTime: parseTournamentField(data, 'start_height'),
+        endTime: parseTournamentField(data, 'end_height'),
+        status: parseTournamentField(data, 'status'),
+        entryCount: parseTournamentField(data, 'entry_count'),
+        prizePool: parseTournamentField(data, 'prize_pool'),
+        blockHeight,
+      };
+      if (!mostRecent) mostRecent = parsed;
+      if (parsed.status === 0 && blockHeight < parsed.endTime) {
+        return res.json(parsed);
+      }
+    }
+    if (mostRecent) return res.json(mostRecent);
+    return res.json({ id: 0, status: 'none' });
   } catch (err) {
-    res.json({ id: 2, status: 'none' });
+    res.json({ id: 0, status: 'none' });
   }
 });
 
 // Active tournaments list
-app.get('/api/tournaments', (req, res) => res.json([]));
+app.get('/api/tournaments', async (req, res) => {
+  const { readMapping } = require('./services/aleo');
+  try {
+    const nextId = await readNextTournamentId(readMapping);
+    const out = [];
+    for (let id = 1; id < nextId; id++) {
+      const data = await readMapping('tournaments', `${id}field`);
+      if (!data) continue;
+      out.push({
+        id,
+        status: parseTournamentField(data, 'status'),
+        prize_pool: parseTournamentField(data, 'prize_pool'),
+        entry_count: parseTournamentField(data, 'entry_count'),
+        reg_height: parseTournamentField(data, 'registration_height'),
+        start_height: parseTournamentField(data, 'start_height'),
+        end_height: parseTournamentField(data, 'end_height'),
+      });
+    }
+    res.json(out);
+  } catch (err) {
+    res.json([]);
+  }
+});
 
 // Contracts info (frontend cache check)
 app.get('/api/contracts', (req, res) => {
@@ -110,9 +151,8 @@ app.get('/api/leaderboard/:tournamentId', (req, res) => {
   res.json({ tournamentId: req.params.tournamentId, leaderboard: [] });
 });
 
-// Live feed (empty stub)
-app.get('/api/feed', (req, res) => res.json([]));
-app.get('/api/live-feed', (req, res) => res.json([]));
+// Feed & live-feed — backed by on-chain mappings (see routes/feed.js)
+app.use('/api', require('./routes/feed'));
 
 // Top startups (stub)
 app.get('/api/top-startups', (req, res) => {
@@ -155,8 +195,8 @@ app.get('/api/info', async (req, res) => {
       program: config.PROGRAM_ID,
       network: config.NETWORK,
       blockHeight,
-      packsSold: packsSold ? parseInt(String(packsSold).replace(/[u"\d]*$/g, '').replace(/"/g, '')) : 0,
-      totalCards: totalCards ? parseInt(String(totalCards).replace(/[u"\d]*$/g, '').replace(/"/g, '')) : 0,
+      packsSold: packsSold ? parseInt(String(packsSold).match(/(\d+)/)?.[1] || '0') : 0,
+      totalCards: totalCards ? parseInt(String(totalCards).match(/(\d+)/)?.[1] || '0') : 0,
       packPrice: '0.1 ALEO',
       maxPacks: 10000,
       maxCards: 50000,

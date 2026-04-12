@@ -1,0 +1,11 @@
+{
+  "program": "unicornx_v3.aleo",
+  "version": "0.1.0",
+  "description": "UnicornX v3 — v2 + pending_prize_pool (pack revenue accrues when no active tournament) + ownership checks on unlock_cards + buyer-seller assertions on marketplace buys + admin set_pack_price",
+  "license": "MIT",
+  "leo": "4.0.0",
+  "dependencies": [
+    { "name": "credits.aleo", "location": "network", "path": null, "edition": null }
+  ],
+  "dev_dependencies": []
+}

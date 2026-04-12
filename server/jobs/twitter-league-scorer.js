@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const LOG_DIR = join(__dirname, '../server/logs');
+const LOG_DIR = join(__dirname, '..', 'logs');
 
 if (!existsSync(LOG_DIR)) {
     mkdirSync(LOG_DIR, { recursive: true });
@@ -76,8 +76,12 @@ const aiStats = {
     }
 };
 
-const API_KEY = 'new1_d1be13bf77c84f1886c5a79cdb692816';
+const API_KEY = process.env.TWITTERAPI_IO_KEY;
 const API_BASE_URL = 'https://api.twitterapi.io/twitter';
+
+if (!API_KEY) {
+    console.warn('[scorer] TWITTERAPI_IO_KEY unset — scorer calls will return empty results');
+}
 
 // Twitter handle -> game startup name
 const STARTUP_MAPPING = {
@@ -634,6 +638,16 @@ function getNextDate(dateStr) {
  * Returns scoring result with all analyzed tweets.
  */
 async function processStartupForDate(userName, date) {
+    if (!API_KEY) {
+        console.log('[scorer] TWITTERAPI_IO_KEY unset — skipping run');
+        return {
+            userName,
+            date,
+            tweets: [],
+            totalPoints: 0,
+            tweetCount: 0
+        };
+    }
     const rawTweets = await fetchTweetsByDate(userName, date);
 
     // Filter out replies and comments — only keep original tweets

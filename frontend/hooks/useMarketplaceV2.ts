@@ -282,7 +282,8 @@ export function useMarketplaceV2() {
     }, []);
 
     const buyCard = useCallback(async (
-        listingIdOrTokenId: bigint | number
+        listingIdOrTokenId: bigint | number,
+        _price?: bigint | number | string
     ): Promise<{ success: boolean; error?: string }> => {
         setLoading(true); setError(null);
         try {
@@ -299,7 +300,11 @@ export function useMarketplaceV2() {
 
             const rarityU8 = parsed.rarity ?? 0;
             const sellerProof = `{ card_id: ${parsed.cardId}field, card_owner: ${parsed.seller}, startup_id: ${parsed.startupId}u8, rarity: ${rarityU8}u8, level: ${parsed.level}u8, salt: ${parsed.salt}field }`;
-            const newSalt = `${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)}field`;
+            // Crypto-secure 248-bit random field element (under BLS12-377 scalar prime ~253 bits).
+            const saltBytes = crypto.getRandomValues(new Uint8Array(31));
+            let saltBigInt = 0n;
+            for (const b of saltBytes) saltBigInt = (saltBigInt << 8n) | BigInt(b);
+            const newSalt = `${saltBigInt}field`;
 
             const listKey = marketKey.listing(listingIdOrTokenId);
             markMarketSyncing(listKey, 'card-buy', 'Buying card…');

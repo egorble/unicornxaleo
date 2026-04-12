@@ -7,6 +7,7 @@ export default defineConfig({
     port: 5171,
     strictPort: true,
     host: '0.0.0.0',
+    allowedHosts: ['aleo.unicornx.fun', 'localhost', '.unicornx.fun'],
     proxy: {
       '/api': {
         target: 'http://localhost:5170',

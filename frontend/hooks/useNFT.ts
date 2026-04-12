@@ -67,7 +67,11 @@ export function useNFT() {
     useEffect(() => subscribeSyncingCards(() => forceUpdate(v => v + 1)), []);
 
     // Get ALL cards — parse from wallet records, then verify on-chain
-    const getCards = useCallback(async (_address: string): Promise<CardData[]> => {
+    const getCards = useCallback(async (_address: string, forceRefresh?: boolean): Promise<CardData[]> => {
+        // If caller requested a forced refresh, drop all cached card metadata first.
+        if (forceRefresh) {
+            blockchainCache.invalidatePrefix('nft:card:');
+        }
         // 1. Parse and deduplicate locally (by cardId+salt)
         // No client-side dead cache — backend /api/cards/alive has 60s TTL cache.
         const seen = new Map<number, CardData>();

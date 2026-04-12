@@ -86,7 +86,7 @@ const LiveFeed: React.FC = () => {
         }
     }, []);
 
-    // Already sorted by points DESC from backend
+    // Sorted newest-first by timestamp from backend
     const displayEvents = events.length > 0 ? events : [];
 
     // Duplicate for seamless infinite scroll

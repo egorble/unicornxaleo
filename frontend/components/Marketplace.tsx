@@ -191,7 +191,8 @@ const Marketplace: React.FC = () => {
     const [myPackTokenIds, setMyPackTokenIds] = useState<number[]>([]);
     const [selectedNFT, setSelectedNFT] = useState<CardData | null>(null);
     const [selectedPackId, setSelectedPackId] = useState<number | null>(null);
-    const [sellMode, setSellMode] = useState<'fixed' | 'auction'>('fixed');
+    // Auction mode disabled on Aleo (hooks return {success:false}); hardcoded to 'fixed'.
+    const sellMode: 'fixed' = 'fixed';
     const [sellPrice, setSellPrice] = useState('');
     const [auctionStartPrice, setAuctionStartPrice] = useState('');
     const [auctionReservePrice, setAuctionReservePrice] = useState('');
@@ -1622,49 +1623,18 @@ const Marketplace: React.FC = () => {
                                         )}
                                     </div>
 
-                                    {/* Sale Mode Tabs */}
-                                    <div className="flex bg-gray-100 dark:bg-white/[0.03] rounded-2xl p-1 mb-4 border border-transparent dark:border-white/[0.06]">
-                                        <button onClick={() => setSellMode('fixed')} className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${sellMode === 'fixed' ? 'bg-yc-aleo/10 dark:bg-yc-aleo/[0.12] text-yc-aleo' : 'text-gray-500 dark:text-gray-500'}`}>
-                                            <Tag className="w-4 h-4 inline mr-1" />Fixed Price
-                                        </button>
-                                        <button onClick={() => setSellMode('auction')} className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${sellMode === 'auction' ? 'bg-yc-aleo/10 dark:bg-yc-aleo/[0.12] text-yc-aleo' : 'text-gray-500 dark:text-gray-500'}`}>
-                                            <Gavel className="w-4 h-4 inline mr-1" />Auction
-                                        </button>
+                                    {/* Fixed-price sale only — auctions are not supported on Aleo */}
+                                    <div>
+                                        <label className="text-gray-500 dark:text-gray-400 text-sm mb-2 block">Price ({currencySymbol()})</label>
+                                        <input type="number" step="0.01" value={sellPrice} onChange={e => setSellPrice(e.target.value)} placeholder="0.00" className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-lg px-4 py-3 text-gray-900 dark:text-white font-bold focus:border-yc-aleo focus:outline-none" />
                                     </div>
-
-                                    {sellMode === 'fixed' ? (
-                                        <div>
-                                            <label className="text-gray-500 dark:text-gray-400 text-sm mb-2 block">Price ({currencySymbol()})</label>
-                                            <input type="number" step="0.01" value={sellPrice} onChange={e => setSellPrice(e.target.value)} placeholder="0.00" className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-lg px-4 py-3 text-gray-900 dark:text-white font-bold focus:border-yc-aleo focus:outline-none" />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="text-gray-500 dark:text-gray-400 text-sm mb-1 block">Start Price ({currencySymbol()})</label>
-                                                <input type="number" step="0.01" value={auctionStartPrice} onChange={e => setAuctionStartPrice(e.target.value)} placeholder="0.00" className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-lg px-4 py-3 text-gray-900 dark:text-white font-bold focus:border-yc-aleo focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="text-gray-500 dark:text-gray-400 text-sm mb-1 block">Reserve Price ({currencySymbol()}, optional)</label>
-                                                <input type="number" step="0.01" value={auctionReservePrice} onChange={e => setAuctionReservePrice(e.target.value)} placeholder="0.00" className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-lg px-4 py-3 text-gray-900 dark:text-white font-bold focus:border-yc-aleo focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="text-gray-500 dark:text-gray-400 text-sm mb-1 block">Duration (days)</label>
-                                                <select value={auctionDuration} onChange={e => setAuctionDuration(e.target.value)} className="w-full bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-lg px-4 py-3 text-gray-900 dark:text-white font-bold focus:border-yc-aleo focus:outline-none">
-                                                    <option value="1">1 day</option>
-                                                    <option value="3">3 days</option>
-                                                    <option value="7">7 days</option>
-                                                    <option value="14">14 days</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <button
                                         onClick={handleListNFT}
-                                        disabled={isSelling || (sellMode === 'fixed' ? !sellPrice : !auctionStartPrice)}
+                                        disabled={isSelling || !sellPrice}
                                         className="w-full mt-4 bg-yc-aleo text-white font-bold py-3 rounded-2xl hover:bg-yc-aleo/80 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:text-gray-500 transition-all"
                                     >
-                                        {isSelling ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : sellMode === 'fixed' ? 'List for Sale' : 'Create Auction'}
+                                        {isSelling ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'List for Sale'}
                                     </button>
                                 </>
                             )}

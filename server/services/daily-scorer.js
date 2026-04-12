@@ -35,7 +35,12 @@ let _twitterScorerPromise = null;
 function loadTwitterScorer() {
     if (!_twitterScorerPromise) {
         const abs = path.join(__dirname, '..', 'jobs', 'twitter-league-scorer.js');
-        _twitterScorerPromise = import(pathToFileURL(abs).href);
+        _twitterScorerPromise = import(pathToFileURL(abs).href).catch(err => {
+            // Reset cached promise so next call retries instead of being
+            // permanently stuck with a rejected promise.
+            _twitterScorerPromise = null;
+            throw err;
+        });
     }
     return _twitterScorerPromise;
 }

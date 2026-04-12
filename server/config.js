@@ -1,3 +1,6 @@
+// Load .env from project root (/opt/unicornxaleo/.env in production, ../.env in dev).
+// Falls back to local server/.env if present for backwards compat.
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 require('dotenv').config();
 
 module.exports = {

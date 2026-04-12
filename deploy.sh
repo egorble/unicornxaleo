@@ -99,6 +99,41 @@ fi
 
 log "Node: $(node -v) | npm: $(npm -v) | nginx: $(nginx -v 2>&1 | cut -d/ -f2)"
 
+# ─── Rust + Leo (required by backend to execute Aleo transactions) ───
+# Install build tools Rust needs
+apt-get install -y -qq build-essential pkg-config libssl-dev
+
+# Rust toolchain — system-wide via rustup (installs to /root; then symlink cargo/rustc to /usr/local/bin so APP_USER can use them)
+if ! command -v cargo &>/dev/null || ! command -v rustc &>/dev/null; then
+    log "Installing Rust toolchain (rustup)..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+    # Make rustc/cargo available system-wide
+    for bin in cargo rustc rustup; do
+        [ -f "/root/.cargo/bin/$bin" ] && ln -sf "/root/.cargo/bin/$bin" "/usr/local/bin/$bin"
+    done
+    log "Rust installed: $(/usr/local/bin/rustc --version 2>/dev/null || echo 'ERROR')"
+else
+    log "Rust already installed: $(rustc --version)"
+fi
+
+# Leo CLI — install via cargo to /usr/local/bin so systemd service (strict ProtectSystem) can exec it
+if ! command -v leo &>/dev/null; then
+    log "Installing Leo CLI via cargo (this takes 5-10 min)..."
+    export CARGO_HOME="/root/.cargo"
+    export PATH="/root/.cargo/bin:$PATH"
+    cargo install leo-lang --locked
+    [ -f "/root/.cargo/bin/leo" ] && ln -sf "/root/.cargo/bin/leo" "/usr/local/bin/leo"
+    log "Leo installed: $(/usr/local/bin/leo --version 2>&1 | head -1)"
+else
+    log "Leo already installed: $(leo --version 2>&1 | head -1)"
+fi
+
+# Verify app user can invoke leo
+if ! sudo -u "$APP_USER" bash -c 'command -v leo >/dev/null 2>&1' 2>/dev/null; then
+    warn "leo not in PATH for $APP_USER — symlinking to /usr/local/bin"
+    [ -f "/root/.cargo/bin/leo" ] && ln -sf "/root/.cargo/bin/leo" "/usr/local/bin/leo"
+fi
+
 ###############################################################################
 # STEP 2: Create app user
 ###############################################################################

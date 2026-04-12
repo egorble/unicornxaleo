@@ -29,7 +29,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=@HOME@/server/data @HOME@/server/logs @HOME@/server/db
+ReadWritePaths=@HOME@/server/data @HOME@/server/logs @HOME@/server/db @HOME@/.aleo @HOME@/contracts
 
 # Logging
 StandardOutput=journal

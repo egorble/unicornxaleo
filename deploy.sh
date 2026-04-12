@@ -155,6 +155,7 @@ mkdir -p "${APP_DIR}"/{server,frontend,deploy}
 mkdir -p "${APP_DIR}/server/data"
 mkdir -p "${APP_DIR}/server/db"
 mkdir -p "${APP_DIR}/server/logs"
+mkdir -p "${APP_DIR}/.aleo"
 mkdir -p "$CERTBOT_WEBROOT"
 mkdir -p "/opt/unicornxaleo-backups"
 

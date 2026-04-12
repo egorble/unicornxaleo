@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#F97316" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="UnicornX" />
+    <meta name="description" content="Fantasy league for YC startups. Collect NFT cards, build your deck, compete in tournaments." />
+    <link rel="icon" type="image/png" href="/unicornx.png" />
+    <link rel="apple-touch-icon" href="/unicornx.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>UnicornX</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+  <body class="bg-yc-light dark:bg-yc-dark text-yc-text-primary dark:text-white">
+    <!-- Pre-React splash overlay — hides noise background until React mounts -->
+    <div id="pre-splash" style="position:fixed;inset:0;z-index:99999;background:#050505;display:flex;align-items:center;justify-content:center;flex-direction:column">
+      <div style="font-family:Inter,sans-serif;font-size:24px;font-weight:900;color:#fff;letter-spacing:-0.5px">UNICORN<span style="color:#F97316">X</span></div>
+      <div style="margin-top:24px;width:160px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden">
+        <div style="width:30%;height:100%;background:linear-gradient(90deg,#F97316,#FDBA74);border-radius:4px;animation:pre-grow 1.5s ease-out forwards"></div>
+      </div>
+      <style>@keyframes pre-grow{to{width:70%}}</style>
+    </div>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

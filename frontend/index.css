@@ -1,0 +1,273 @@
+@import "tailwindcss";
+@config "./tailwind.config.js";
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8f9fa;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(249, 115, 22, 0.04) 0%, transparent 60%);
+  color: #111827;
+}
+
+.dark body,
+html.dark body {
+  background-color: #121212;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 50%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 4rem 4rem, 4rem 4rem;
+  background-attachment: fixed;
+  color: #f3f4f6;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Global Glassmorphism Classes — Light mode */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.04);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.06);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.neon-glow {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+}
+
+.neon-text {
+  text-shadow: none;
+}
+
+/* Dark mode overrides */
+.dark .glass-panel,
+html.dark .glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+.dark .glass-panel-hover:hover,
+html.dark .glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+.dark .glass-nav,
+html.dark .glass-nav {
+  background: rgba(5, 5, 7, 0.8);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dark .neon-glow,
+html.dark .neon-glow {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+}
+
+.dark .neon-text,
+html.dark .neon-text {
+  text-shadow: none;
+}
+
+/* Text Selection */
+::selection {
+  background: rgba(249, 115, 22, 0.2);
+  color: #111827;
+}
+
+.dark ::selection,
+html.dark ::selection {
+  background: rgba(249, 115, 22, 0.35);
+  color: #f3f4f6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.2);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.4);
+}
+
+.dark ::-webkit-scrollbar-track,
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.25);
+  border-radius: 6px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.4);
+}
+
+/* Bubble pop animation for league sub-menu */
+@keyframes bubble-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08) translateY(-4px);
+  }
+  70% {
+    transform: scale(0.95) translateY(1px);
+  }
+  85% {
+    transform: scale(1.02) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.bubble-pop-in {
+  animation: bubble-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Floating island: compact → full on scroll */
+.floating-island {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  transform-origin: top left;
+}
+
+.floating-island-docked {
+  transform: scale(0.82);
+  opacity: 0.7;
+}
+
+/* 3D card flip utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Marquee pause on hover */
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Native select — dark mode: force browser to use dark native dropdown */
+.dark select,
+html.dark select {
+  color-scheme: dark;
+  background-color: #1A1A1A;
+  color: #f3f4f6;
+}
+
+.dark select option,
+html.dark select option {
+  background-color: #1A1A1A;
+  color: #f3f4f6;
+}
+
+/* Boost Pack button — animated border glow that traces the contour */
+.boost-border-anim {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.boost-border-anim::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--boost-angle, 0deg),
+    transparent 0%,
+    #F97316 10%,
+    #EA580C 20%,
+    transparent 30%,
+    transparent 100%
+  );
+  animation: boost-rotate 5s linear infinite;
+  z-index: -2;
+}
+
+.boost-border-anim::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Light mode inner fill */
+.boost-border-anim::after {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+}
+
+html.dark .boost-border-anim::after,
+.dark .boost-border-anim::after {
+  background: rgba(24, 24, 27, 0.65);
+  backdrop-filter: blur(24px);
+}
+
+@keyframes boost-rotate {
+  to {
+    --boost-angle: 360deg;
+  }
+}
+
+@property --boost-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}

@@ -1,0 +1,11 @@
+{
+  "program": "unicornx_v1.aleo",
+  "version": "0.1.0",
+  "description": "UnicornX v1 — buy_pack splits funds: 10% platform, 10% referral, 80-90% tournament prize pool",
+  "license": "MIT",
+  "leo": "4.0.0",
+  "dependencies": [
+    { "name": "credits.aleo", "location": "network", "path": null, "edition": null }
+  ],
+  "dev_dependencies": []
+}

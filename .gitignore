@@ -1,0 +1,109 @@
+# ─────────────────────────────────────────────────────────────
+# Secrets — NEVER commit
+# ─────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+*.pem
+*.key
+**/private-key*
+**/*admin-key*
+
+# Aleo keys / wallets
+*.privkey
+APrivateKey*
+**/.aleo/
+aleo_secrets.json
+
+# ─────────────────────────────────────────────────────────────
+# Dependencies
+# ─────────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+package-lock.json.backup
+
+# ─────────────────────────────────────────────────────────────
+# Build artifacts
+# ─────────────────────────────────────────────────────────────
+dist/
+build/
+**/build/
+!contracts/**/build/*.aleo
+!contracts/**/build/program.json
+!contracts/**/build/abi.json
+.next/
+out/
+.turbo/
+.cache/
+.vite/
+**/.vite/
+*.tsbuildinfo
+
+# Leo / Aleo build outputs
+**/.leo/
+**/*.avm
+**/*.prover
+**/*.verifier
+
+# ─────────────────────────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# ─────────────────────────────────────────────────────────────
+# Editor / OS
+# ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─────────────────────────────────────────────────────────────
+# Project-specific — reference / historical code not to ship
+# ─────────────────────────────────────────────────────────────
+# Reference EVM predecessor (separate git repo, not pushed here)
+/attentionx/
+../attentionx/
+
+# NullPay (reference architecture, separate git repo)
+/NullPay/
+../NullPay/
+
+# Old Leo contract drafts superseded by unicornx_v1
+contracts/attentionx_v3/
+contracts/attentionx_v4/
+contracts/attentionx_v11/
+contracts/hash_helper/
+
+# Backup + scratch
+*.bak
+*.tmp
+/tmp/
+scratch/
+
+# ─────────────────────────────────────────────────────────────
+# Runtime / misc
+# ─────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+.eslintcache
+.stylelintcache
+
+# Claude Code artifacts
+.claude/
+CLAUDE.md.bak

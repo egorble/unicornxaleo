@@ -1,0 +1,26 @@
+{
+  "name": "UnicornX",
+  "short_name": "UnicornX",
+  "description": "Fantasy league for YC startups. Collect NFT cards, build your deck, compete in tournaments.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#9333EA",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/unicornx.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/unicornx.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "en"
+}

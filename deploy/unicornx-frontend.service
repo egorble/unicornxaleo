@@ -9,7 +9,7 @@ Type=simple
 User=@USER@
 Group=@USER@
 WorkingDirectory=@HOME@/frontend
-ExecStart=/usr/bin/npx --yes serve -s dist -l 5171
+ExecStart=@HOME@/frontend/node_modules/.bin/serve -s dist -l 5171
 Environment=NODE_ENV=production
 
 # Restart policy

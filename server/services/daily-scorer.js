@@ -34,7 +34,7 @@ const SCORES_FILE = path.join(DATA_DIR, 'daily-scores.json');
 let _twitterScorerPromise = null;
 function loadTwitterScorer() {
     if (!_twitterScorerPromise) {
-        const abs = path.join(__dirname, '..', 'jobs', 'twitter-league-scorer.js');
+        const abs = path.join(__dirname, '..', 'jobs', 'twitter-league-scorer.mjs');
         _twitterScorerPromise = import(pathToFileURL(abs).href).catch(err => {
             // Reset cached promise so next call retries instead of being
             // permanently stuck with a rejected promise.

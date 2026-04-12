@@ -328,8 +328,15 @@ ln -sf "$NGINX_CONF" "$NGINX_ENABLED"
 rm -f /etc/nginx/sites-enabled/default
 
 nginx -t
-systemctl reload nginx
-log "nginx configured and reloaded"
+# Start nginx if not running, otherwise reload. Also enable at boot.
+systemctl enable nginx >/dev/null 2>&1 || true
+if systemctl is-active --quiet nginx; then
+    systemctl reload nginx
+    log "nginx reloaded"
+else
+    systemctl start nginx
+    log "nginx started"
+fi
 
 ###############################################################################
 # STEP 9: SSL Certificate (Let's Encrypt via certbot --nginx)

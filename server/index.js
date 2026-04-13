@@ -154,10 +154,21 @@ app.get('/api/leaderboard/:tournamentId', (req, res) => {
 // Feed & live-feed — backed by on-chain mappings (see routes/feed.js)
 app.use('/api', require('./routes/feed'));
 
-// Top startups (stub)
-app.get('/api/top-startups', (req, res) => {
-  res.json(config.STARTUPS.map(s => ({ ...s, score: 0, change: 0 })));
-});
+// Top startups — ranked by aggregated points across recent days.
+// `:tournamentId` is accepted but currently ignored (single global ranking).
+function topStartupsHandler(req, res) {
+  const limit = Math.max(1, Math.min(50, parseInt(req.query.limit) || 5));
+  const days = Math.max(1, Math.min(30, parseInt(req.query.days) || 10));
+  const { getAggregatedScores } = require('./services/daily-scorer');
+  const agg = getAggregatedScores(days);
+  const ranked = config.STARTUPS
+    .map(s => ({ name: s.name, points: Number(agg[`s${s.id}`] || 0) }))
+    .sort((a, b) => b.points - a.points)
+    .slice(0, limit);
+  res.json({ success: true, data: ranked });
+}
+app.get('/api/top-startups', topStartupsHandler);
+app.get('/api/top-startups/:tournamentId', topStartupsHandler);
 
 // Card scores by address (stub)
 app.get('/api/card-scores/:address', (req, res) => {

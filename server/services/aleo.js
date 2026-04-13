@@ -60,16 +60,20 @@ function executeTransition(functionName, inputs) {
       env: { ...process.env, PATH: `${process.env.HOME}/.cargo/bin:${process.env.PATH}` },
     });
 
-    const confirmed = stdout.includes('Execution confirmed');
-    const rejected = stdout.includes('Transaction rejected');
+    const rejected = stdout.includes('Transaction rejected') || stdout.includes('Failed to broadcast');
 
-    // Extract transaction ID
-    const txMatch = stdout.match(/transaction ID: '([^']+)'/);
+    // Leo 4.0.0 with --broadcast returns immediately after broadcast (does not wait
+    // for confirmation). Presence of a tx ID + no rejection signal = successfully
+    // broadcast. Final on-chain confirmation must be polled separately.
+    const txMatch = stdout.match(/transaction ID:?\s*'?([a-z0-9]+)'?/i)
+                 || stdout.match(/(at1[a-z0-9]+)/);
     const txId = txMatch ? txMatch[1] : null;
 
-    console.log(`[aleo] ${functionName}: ${confirmed ? 'CONFIRMED' : rejected ? 'REJECTED' : 'UNKNOWN'} tx=${txId}`);
+    const broadcast = !!txId && !rejected;
+    const status = rejected ? 'REJECTED' : broadcast ? 'BROADCAST' : 'UNKNOWN';
+    console.log(`[aleo] ${functionName}: ${status} tx=${txId}`);
 
-    return { success: confirmed, rejected, txId, output: stdout };
+    return { success: broadcast, rejected, txId, output: stdout };
   } catch (err) {
     console.error(`[aleo] ${functionName} failed:`, err.message);
     return { success: false, rejected: true, txId: null, output: err.stdout || err.message };

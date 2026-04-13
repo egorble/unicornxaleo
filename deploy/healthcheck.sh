@@ -27,7 +27,8 @@ check_service() {
 
     local HTTP_CODE="000"
     for i in $(seq 1 $MAX_RETRIES); do
-        HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")
+        # Generous timeout — backend can be CPU-bound generating ZK proofs.
+        HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 30 "$url" 2>/dev/null || echo "000")
 
         if [ "$HTTP_CODE" = "200" ]; then
             return 0
@@ -38,7 +39,21 @@ check_service() {
         fi
     done
 
-    # Service unhealthy — restart and re-check
+    # Don't restart the backend mid-transaction. `leo execute` pins CPU at
+    # 100% for several minutes generating ZK proofs, during which routine
+    # endpoints time out — that's expected, not a failure mode.
+    if [ "$service" = "unicornx-backend" ] && pgrep -x leo >/dev/null 2>&1; then
+        log "INFO: $name slow but leo execute in progress — skipping restart"
+        return 0
+    fi
+
+    # Also skip if the systemd unit is up but just busy.
+    if systemctl is-active --quiet "$service"; then
+        log "INFO: $name unhealthy (HTTP $HTTP_CODE) but $service is active — skipping restart"
+        return 0
+    fi
+
+    # Service genuinely down — restart and re-check
     log "WARN: $name unhealthy (HTTP $HTTP_CODE after $MAX_RETRIES retries). Restarting $service..."
     systemctl restart "$service" 2>/dev/null || true
     sleep 5

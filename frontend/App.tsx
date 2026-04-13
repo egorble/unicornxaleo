@@ -15,7 +15,6 @@ import ProfileSetupModal from './components/ProfileSetupModal';
 import ProfileEditModal from './components/ProfileEditModal';
 import BottomNav from './components/BottomNav';
 import TournamentCTA from './components/TournamentCTA';
-import DashboardLeaderboard from './components/DashboardLeaderboard';
 import MobileWidgets from './components/MobileWidgets';
 import SplashScreen from './components/SplashScreen';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -293,10 +292,7 @@ const AppContent: React.FC = () => {
                         {/* 3.5 Top Startups + Referral (visible below xl where RightPanel is hidden) */}
                         <MobileWidgets onOpenPack={() => setIsPackModalOpen(true)} />
 
-                        {/* 4. Leaderboard */}
-                        <DashboardLeaderboard onNavigate={handleSectionChange} />
-
-                        {/* 5. NFT Marketplace */}
+                        {/* NFT Marketplace */}
                         <div className="mt-8">
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
                                 NFT Marketplace

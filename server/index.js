@@ -102,13 +102,13 @@ app.get('/api/tournaments/active', async (req, res) => {
       };
       if (!mostRecent) mostRecent = parsed;
       if (parsed.status === 0 && blockHeight < parsed.endTime) {
-        return res.json(parsed);
+        return res.json({ success: true, data: parsed });
       }
     }
-    if (mostRecent) return res.json(mostRecent);
-    return res.json({ id: 0, status: 'none' });
+    if (mostRecent) return res.json({ success: true, data: mostRecent });
+    return res.json({ success: true, data: null });
   } catch (err) {
-    res.json({ id: 0, status: 'none' });
+    res.json({ success: false, data: null, error: err.message });
   }
 });
 
@@ -148,7 +148,7 @@ app.get('/api/contracts', (req, res) => {
 
 // Leaderboard (empty stub)
 app.get('/api/leaderboard/:tournamentId', (req, res) => {
-  res.json({ tournamentId: req.params.tournamentId, leaderboard: [] });
+  res.json({ success: true, data: [] });
 });
 
 // Feed & live-feed — backed by on-chain mappings (see routes/feed.js)

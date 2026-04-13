@@ -81,27 +81,51 @@ async function readNextTournamentId(readMapping) {
 }
 
 // Active tournament — iterate from next_tournament_id-1 downward, first with status=0 & block<end_height
+// Returns UI-friendly shape: block heights converted to unix seconds (assuming ~2s/block),
+// status as string, prize pool formatted in ALEO.
 app.get('/api/tournaments/active', async (req, res) => {
   const { readMapping, getBlockHeight } = require('./services/aleo');
   try {
     const blockHeight = await getBlockHeight();
     const nextId = await readNextTournamentId(readMapping);
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    function blockToUnix(targetBlock) {
+      return nowSec + Math.floor((targetBlock - blockHeight) * 2);
+    }
+
+    function shapeTournament(id, data) {
+      const regH = parseTournamentField(data, 'registration_height');
+      const startH = parseTournamentField(data, 'start_height');
+      const endH = parseTournamentField(data, 'end_height');
+      const statusNum = parseTournamentField(data, 'status');
+      const entryCount = parseTournamentField(data, 'entry_count');
+      const prizeMicro = parseTournamentField(data, 'prize_pool');
+      let status = 'unknown';
+      if (statusNum === 0) {
+        if (blockHeight < startH) status = 'registration';
+        else if (blockHeight < endH) status = 'active';
+        else status = 'ended';
+      } else if (statusNum === 1) status = 'finalized';
+      return {
+        id,
+        startTime: blockToUnix(startH),
+        endTime: blockToUnix(endH),
+        registrationStart: blockToUnix(regH),
+        status,
+        entryCount,
+        prizePool: (prizeMicro / 1_000_000).toFixed(2),
+        blockHeight,
+      };
+    }
+
     let mostRecent = null;
     for (let id = nextId - 1; id >= 1; id--) {
       const data = await readMapping('tournaments', `${id}field`);
       if (!data) continue;
-      const parsed = {
-        id,
-        registrationStart: parseTournamentField(data, 'registration_height'),
-        startTime: parseTournamentField(data, 'start_height'),
-        endTime: parseTournamentField(data, 'end_height'),
-        status: parseTournamentField(data, 'status'),
-        entryCount: parseTournamentField(data, 'entry_count'),
-        prizePool: parseTournamentField(data, 'prize_pool'),
-        blockHeight,
-      };
+      const parsed = shapeTournament(id, data);
       if (!mostRecent) mostRecent = parsed;
-      if (parsed.status === 0 && blockHeight < parsed.endTime) {
+      if ((parsed.status === 'registration' || parsed.status === 'active')) {
         return res.json({ success: true, data: parsed });
       }
     }
